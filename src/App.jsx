@@ -1,6 +1,8 @@
 import React, { useState } from 'react';
-import Login from './components/auth/Login';
-import Dashboard from './components/Dashboard'; // Crearemos este ahora
+import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
+import Login from './Components/auth/Login';
+import Dashboard from './Components/Dashboard';
+import { comercialRoutes } from './modules/comercial';
 
 function App() {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
@@ -11,13 +13,20 @@ function App() {
   };
 
   return (
-    <div className="App">
-      {isAuthenticated ? (
-        <Dashboard /> 
-      ) : (
-        <Login onLoginSuccess={handleLoginSuccess} />
-      )}
-    </div>
+    <BrowserRouter>
+      <Routes>
+        <Route path="/login" element={isAuthenticated ? <Navigate to="/" /> : <Login onLoginSuccess={handleLoginSuccess} />} />
+        <Route path="/" element={isAuthenticated ? <Dashboard /> : <Navigate to="/login" />} />
+        {comercialRoutes.map((route) => (
+          <Route
+            key={route.path}
+            path={route.path}
+            element={isAuthenticated ? route.element : <Navigate to="/login" />}
+          />
+        ))}
+        <Route path="*" element={<Navigate to={isAuthenticated ? '/' : '/login'} />} />
+      </Routes>
+    </BrowserRouter>
   );
 }
 

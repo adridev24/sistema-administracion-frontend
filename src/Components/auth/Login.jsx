@@ -1,9 +1,12 @@
 import React, { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import authService from '../../Services/authService';
 import logoAlbace from '../../assets/logo_albace_completo.png'; 
 import './Login.css';
 
 const Login = ({ onLoginSuccess }) => {
+  const navigate = useNavigate();
+
   // 1. Estado único para las credenciales
   const [credentials, setCredentials] = useState({
     username: '',
@@ -64,9 +67,9 @@ const Login = ({ onLoginSuccess }) => {
     try {
       const resp = await authService.login(credentials.username, credentials.password);
       console.log('Login exitoso:', resp);
-      // Guardado del token (el servicio ya lo guarda, pero dejamos esto por compatibilidad)
       if (resp?.token) localStorage.setItem('token', resp.token);
       onLoginSuccess();
+      navigate('/');
     } catch (err) {
       console.error('Error en login:', err.response?.data || err.message || err);
       alert('Error de autenticación: Verifica usuario/password o que la API esté corriendo.');

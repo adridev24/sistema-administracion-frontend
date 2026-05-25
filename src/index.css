@@ -1,7 +1,126 @@
 /* Definición de variables CSS para el Branding de Metalúrgica Albace */
 :root {
   --color-albace-orange: #EC6624;
+  --color-albace-orange-soft: #fff0e6;
   --color-albace-grey: #4B4C4E;
   --color-text-dark: #2A2A2A;
   --color-bg-light: #F9FAFB;
+  --body-bg: #f4f6f9;
+  --body-text: #1f2937;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html, body, #root {
+  min-height: 100%;
+}
+
+body {
+  margin: 0;
+  font-family: Inter, system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  background: var(--body-bg);
+  color: var(--body-text);
+}
+
+input, select, textarea, button {
+  font: inherit;
+}
+
+button {
+  cursor: pointer;
+}
+
+.loading-dot-wrapper {
+  display: inline-flex;
+  gap: 8px;
+}
+
+.loading-dot {
+  width: 12px;
+  height: 12px;
+  background: var(--color-albace-orange);
+  border-radius: 50%;
+  animation: loadingDot 0.9s ease-in-out infinite;
+}
+
+.loading-dot:nth-child(2) {
+  animation-delay: 0.15s;
+}
+
+.loading-dot:nth-child(3) {
+  animation-delay: 0.3s;
+}
+
+@keyframes loadingDot {
+  0%, 100% { transform: scale(0.75); opacity: 0.4; }
+  50% { transform: scale(1.1); opacity: 1; }
+}
+
+.dashboard-page {
+  padding: 24px;
+  font-family: Inter, system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  min-height: 100vh;
+  background: var(--body-bg);
+}
+
+.dashboard-header {
+  border-bottom: 2px solid var(--color-albace-orange);
+  margin-bottom: 24px;
+  display: flex;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 20px;
+}
+
+.dashboard-header h1 {
+  color: var(--color-albace-grey);
+  margin-bottom: 8px;
+}
+
+.dashboard-header p {
+  color: #637381;
+}
+
+.dashboard-actions {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+  align-items: center;
+}
+
+.dashboard-button {
+  background: var(--color-albace-orange);
+  color: #ffffff;
+  padding: 12px 18px;
+  border-radius: 10px;
+  text-decoration: none;
+  border: none;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.dashboard-button-secondary {
+  background: #f8fafc;
+  color: var(--color-albace-grey);
+  border: 1px solid #cbd5e1;
+  padding: 12px 18px;
+  border-radius: 10px;
+}
+
+.dashboard-cards {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  gap: 20px;
+}
+
+.dashboard-card {
+  border: 1px solid #dde3ea;
+  padding: 20px;
+  border-radius: 18px;
+  text-align: left;
+  box-shadow: 0 16px 40px rgba(15, 23, 42, 0.06);
+  background: #ffffff;
 }

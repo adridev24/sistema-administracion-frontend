@@ -1,7 +1,9 @@
 import axios from 'axios';
 
-// Usa la variable de entorno Vite `VITE_API_URL` o fallback local
-const API_URL = import.meta.env.VITE_API_URL || 'http://127.0.0.1:5000/api/auth';
+const BASE_URL = import.meta.env.VITE_API_BASE_URL ||
+  (import.meta.env.VITE_API_URL ? import.meta.env.VITE_API_URL.replace(/\/api\/auth$/, '') : 'http://localhost:5000');
+
+const API_URL = `${BASE_URL}/api/auth`;
 
 const login = async (username, password) => {
   try {
@@ -10,23 +12,17 @@ const login = async (username, password) => {
       password
     });
     
-    // Si la API responde con éxito, devolverá el token JWT en response.data
     console.log('Respuesta de la API:', response.data);
     
-    // Guardamos el token en localStorage si viene en la respuesta (opcional)
     if (response.data?.token) {
       localStorage.setItem('token', response.data.token);
     }
 
-    // Como ingenieros de software, aquí deberíamos validar la estructura
-    // de la respuesta antes de confiar en ella.
-
-    return response.data; // Usualmente: { token: 'ey...', username: '...' }
+    return response.data;
 
   } catch (error) {
-    // Manejo profesional de errores
     console.error('Error durante el login:', error.response ? error.response.data : error.message);
-    throw error; // Re-lanzamos el error para que el componente UI pueda mostrarlo
+    throw error;
   }
 };
 
