@@ -1,7 +1,7 @@
 import React from 'react';
 import Badge from '../../../shared/components/Badge';
 
-const CuotasComercialesTable = ({ cuotas }) => {
+const CuotasComercialesTable = ({ cuotas, onAdjustCuota }) => {
   if (!cuotas || cuotas.length === 0) {
     return <p className="empty-state">No existen cuotas comerciales registradas.</p>;
   }
@@ -18,6 +18,7 @@ const CuotasComercialesTable = ({ cuotas }) => {
             <th>Importe pagado</th>
             <th>Saldo pendiente</th>
             <th>Estado</th>
+            <th>Acciones</th>
           </tr>
         </thead>
         <tbody>
@@ -30,6 +31,15 @@ const CuotasComercialesTable = ({ cuotas }) => {
               <td>{cuota.importePagado.toLocaleString()}</td>
               <td>{cuota.saldoPendiente.toLocaleString()}</td>
               <td><Badge type={cuota.estado}>{cuota.estado}</Badge></td>
+              <td>
+                {onAdjustCuota && cuota.estado !== 'Pagada' ? (
+                  <button className="btn-secondary btn-small" type="button" onClick={() => onAdjustCuota(cuota)}>
+                    Ajustar
+                  </button>
+                ) : (
+                  <span className="small-text">-</span>
+                )}
+              </td>
             </tr>
           ))}
         </tbody>

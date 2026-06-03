@@ -1,4 +1,6 @@
-/* Login.css */
+/* Login.css: layout-specific styles only.
+   Generic form controls moved to shared/form.css */
+
 .login-container {
   display: flex;
   justify-content: center;
@@ -9,64 +11,33 @@
 
 .login-card {
   background: white;
-  padding: 40px;
-  border-radius: 8px;
-  box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+  padding: 36px 28px;
+  border-radius: 12px;
+  box-shadow: 0 8px 24px rgba(0,0,0,0.06);
   width: 100%;
-  max-width: 400px;
+  max-width: 420px;
 }
 
 .login-logo {
-  max-width: 100%; /* El logo completo de Albace se ajustará */
+  max-width: 100%;
   height: auto;
-  margin-bottom: 20px;
+  margin-bottom: 16px;
+  display: block;
+  margin-left: auto;
+  margin-right: auto;
 }
 
 .login-header h2 {
   color: var(--color-text-dark);
-  font-size: 1.25rem;
-  /* margin-bottom: 5px; */
+  font-size: 1.15rem;
   text-align: center;
-  font-family: Arial, Helvetica, sans-serif ;
-
-  border-bottom: 1px solid #eee;
-  padding-bottom: 20px;
-  margin-bottom: 25px;
+  font-family: Inter, Arial, Helvetica, sans-serif;
+  border-bottom: 1px solid #f0f0f0;
+  padding-bottom: 16px;
+  margin-bottom: 18px;
 }
 
-.form-group label {
-  color: var(--color-albace-grey); /* Usamos el gris corporativo */
-  /*margin-bottom: 20px; /* Separa cada bloque de usuario/contraseña */
-  text-align: left;    /* Alinea el texto a la izquierda */
-
-  display: block;      /* Fuerza al input a bajar a la siguiente línea */
-  margin-bottom: 8px;  /* El "aire" que le faltaba entre el texto y el cuadro */
-  font-weight: bold;
-  color: #333;
-
-  font-family: Arial, Helvetica, sans-serif ;
-}
-
-
-.form-group input {
-  width: 100%;         /* Que ocupe todo el ancho de la tarjeta */
-  padding: 12px;       /* Espacio interno para que el texto no toque los bordes */
-  border: 1px solid #ccc;
-  border-radius: 4px;  /* Bordes redondeados sutiles */
-  box-sizing: border-box; /* Crucial para que el padding no deforme el ancho */
-}
-
-/* El botón principal usa el naranja corporativo */
-.btn-primary {
-  background-color: var(--color-albace-orange);
-  color: white;
-  border: none;
-  padding: 10px 15px;
-  border-radius: 4px;
-  width: 100%;
-  cursor: pointer;
-}
-
-.btn-primary:hover {
-  background-color: #d1561c; /* Un tono más oscuro del naranja para el hover */
+.login-form button {
+  display: block;
+  margin: 22px auto 0;
 }

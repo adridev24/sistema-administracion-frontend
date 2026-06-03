@@ -31,7 +31,7 @@ const NuevoAcuerdoPage = () => {
       <div className="page-header">
         <div>
           <h1>Nuevo acuerdo comercial</h1>
-          <p className="page-subtitle">Crea el compromiso comercial de una obra sin generar contabilidad.</p>
+          <p className="page-subtitle">Crea el compromiso comercial de una obra.</p>
         </div>
         <div className="header-actions">
           <button className="btn-secondary" type="button" onClick={() => navigate(-1)}>

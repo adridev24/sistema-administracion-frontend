@@ -1,37 +1,81 @@
-﻿import React from 'react';
-import { Link } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
+import logoAlbace from '../assets/logo_albace_completo.png';
+
+const modules = [
+  {
+    title: 'Comercial',
+    description: 'Acuerdos, planes de pago, cuotas y pagos comerciales.',
+    status: 'Disponible',
+    route: '/comercial',
+    metric: '',
+  },
+  {
+    title: 'Compras',
+    description: 'Gestión de insumos, proveedores y comprobantes.',
+    status: 'Próximo',
+    route: null,
+    metric: 'Pendiente de definición',
+  },
+  {
+    title: 'Ventas',
+    description: 'Facturación, cobranzas y cuentas corrientes.',
+    status: 'Próximo',
+    route: null,
+    metric: 'Pendiente de definición',
+  },
+  {
+    title: 'Contabilidad',
+    description: 'Asientos, libro diario y reportes contables.',
+    status: 'Próximo',
+    route: null,
+    metric: 'Pendiente de definición',
+  },
+];
 
 const Dashboard = () => {
+  const navigate = useNavigate();
+
   return (
     <div className="dashboard-page">
-      <header className="dashboard-header">
-        <div>
-          <h1>METALÚRGICA ALBACE</h1>
-          <p>Panel administrativo con acceso a los módulos comerciales, contables y de gestión.</p>
-        </div>
+      <header className="dashboard-topbar">
+        <img src={logoAlbace} alt="Metalúrgica Albace" className="dashboard-logo" />
         <div className="dashboard-actions">
-          <Link to="/comercial" className="dashboard-button">Gestión Comercial</Link>
           <button onClick={() => window.location.reload()} className="dashboard-button-secondary">Cerrar sesión</button>
         </div>
       </header>
 
+      <section className="dashboard-hero">
+        <div className="dashboard-hero-copy">
+          <span className="eyebrow">Sistema administrativo</span>
+          <h1>Panel de control operativo</h1>
+        </div>
+      </section>
+
+      <section className="dashboard-section-heading">
+        <div>
+          <span className="eyebrow">Módulos</span>
+          <h2>Accesos principales</h2>
+        </div>
+      </section>
+
       <div className="dashboard-cards">
-        <div className="dashboard-card">
-          <h3>🧾 Comercial</h3>
-          <p>Acuerdos comerciales, planes de pago, cuotas y pagos.</p>
-        </div>
-        <div className="dashboard-card">
-          <h3>📦 Compras</h3>
-          <p>Gestión de insumos y proveedores.</p>
-        </div>
-        <div className="dashboard-card">
-          <h3>💰 Ventas</h3>
-          <p>Facturación y cuentas corrientes.</p>
-        </div>
-        <div className="dashboard-card">
-          <h3>📊 Contabilidad</h3>
-          <p>Asientos y Libro Diario.</p>
-        </div>
+        {modules.map((module) => (
+          <button
+            key={module.title}
+            className={`dashboard-card ${module.route ? 'is-active' : 'is-disabled'}`}
+            onClick={() => module.route && navigate(module.route)}
+            type="button"
+            disabled={!module.route}
+          >
+            <div className="dashboard-card-header">
+              <span className="module-mark">{module.title.slice(0, 2).toUpperCase()}</span>
+              <span className="module-status">{module.status}</span>
+            </div>
+            <h3>{module.title}</h3>
+            <p>{module.description}</p>
+            <small>{module.metric}</small>
+          </button>
+        ))}
       </div>
     </div>
   );

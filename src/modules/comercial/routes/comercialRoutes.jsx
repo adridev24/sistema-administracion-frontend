@@ -3,6 +3,7 @@ import AcuerdosPage from '../pages/AcuerdosPage';
 import AcuerdoDetallePage from '../pages/AcuerdoDetallePage';
 import NuevoAcuerdoPage from '../pages/NuevoAcuerdoPage';
 import PagosComercialesPage from '../pages/PagosComercialesPage';
+import ReportesComercialesPage from '../pages/ReportesComercialesPage';
 
 const comercialRoutes = [
   {
@@ -20,6 +21,10 @@ const comercialRoutes = [
   {
     path: '/comercial/pagos',
     element: <PagosComercialesPage />
+  },
+  {
+    path: '/comercial/reportes',
+    element: <ReportesComercialesPage />
   }
 ];
 

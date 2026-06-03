@@ -1,11 +1,14 @@
-import React, { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import SectionCard from '../../../shared/components/SectionCard';
 import LoadingSpinner from '../../../shared/components/LoadingSpinner';
 import externalDataService from '../services/externalDataService';
 import EstadoComercialResumen from '../components/EstadoComercialResumen';
 import PlanPagoForm from '../components/PlanPagoForm';
+import PlanPagoEditor from '../components/PlanPagoEditor';
 import CuotasComercialesTable from '../components/CuotasComercialesTable';
+import AjusteCuotaModal from '../components/AjusteCuotaModal';
+import AgregarCuotaModal from '../components/AgregarCuotaModal';
 import useAcuerdoDetalle from '../hooks/useAcuerdoDetalle';
 import acuerdosService from '../services/acuerdosService';
 import '../comercial.css';
@@ -15,9 +18,18 @@ const AcuerdoDetallePage = () => {
   const { detalle, loading, error, setDetalle } = useAcuerdoDetalle(id);
   const [planLoading, setPlanLoading] = useState(false);
   const [planError, setPlanError] = useState('');
+  const [approving, setApproving] = useState(false);
+  const [approveError, setApproveError] = useState('');
   const [success, setSuccess] = useState('');
   const [clienteNombre, setClienteNombre] = useState('');
   const [obraNombre, setObraNombre] = useState('');
+  const [ajustarModalOpen, setAjustarModalOpen] = useState(false);
+  const [selectedCuota, setSelectedCuota] = useState(null);
+  const [agregarModalOpen, setAgregarModalOpen] = useState(false);
+  const [modalLoading, setModalLoading] = useState(false);
+  const [modalError, setModalError] = useState('');
+
+  const planExists = detalle?.planPago?.id > 0;
 
   useEffect(() => {
     if (!detalle) {
@@ -64,13 +76,88 @@ const AcuerdoDetallePage = () => {
     setPlanError('');
     setSuccess('');
     try {
-      const plan = await acuerdosService.crearPlanPago(Number(id), payload);
-      setDetalle({ ...detalle, planPago: plan });
+      await acuerdosService.crearPlanPago(Number(id), payload);
+      const updatedDetalle = await acuerdosService.getAcuerdoDetalle(id);
+      setDetalle(updatedDetalle);
       setSuccess('Plan de pago generado correctamente.');
     } catch (err) {
       setPlanError('No se pudo generar el plan. Revisa los datos y vuelve a intentar.');
     } finally {
       setPlanLoading(false);
+    }
+  };
+
+  const handleApprove = async () => {
+    setApproveError('');
+    setSuccess('');
+    setApproving(true);
+    try {
+      const updated = await acuerdosService.aprobarAcuerdo(Number(id));
+      setDetalle({ ...detalle, estado: updated.estado });
+      setSuccess('Acuerdo aprobado correctamente.');
+    } catch (err) {
+      setApproveError('No se pudo aprobar el acuerdo. Intenta nuevamente.');
+    } finally {
+      setApproving(false);
+    }
+  };
+
+  const openAjustarCuota = (cuota) => {
+    setSelectedCuota(cuota);
+    setModalError('');
+    setSuccess('');
+    setAjustarModalOpen(true);
+  };
+
+  const closeAjustarCuota = () => {
+    setAjustarModalOpen(false);
+    setSelectedCuota(null);
+    setModalError('');
+  };
+
+  const handleAjustarCuota = async (payload) => {
+    setModalLoading(true);
+    setModalError('');
+    setSuccess('');
+    try {
+      await acuerdosService.ajustarCuota(selectedCuota.id, payload);
+      const updatedDetalle = await acuerdosService.getAcuerdoDetalle(id);
+      setDetalle(updatedDetalle);
+      setSuccess('Ajuste de cuota registrado correctamente.');
+      closeAjustarCuota();
+    } catch (err) {
+      setModalError('No se pudo guardar el ajuste. Revisa los datos e intenta nuevamente.');
+    } finally {
+      setModalLoading(false);
+    }
+  };
+
+  const openAgregarCuota = () => {
+    setAgregarModalOpen(true);
+    setModalError('');
+    setSuccess('');
+  };
+
+  const closeAgregarCuota = () => {
+    setAgregarModalOpen(false);
+    setModalError('');
+  };
+
+  const handleAgregarCuota = async (payload) => {
+    if (!detalle?.planPago) return;
+    setModalLoading(true);
+    setModalError('');
+    setSuccess('');
+    try {
+      await acuerdosService.agregarCuotaAjuste(detalle.planPago.id, payload);
+      const updatedDetalle = await acuerdosService.getAcuerdoDetalle(id);
+      setDetalle(updatedDetalle);
+      setSuccess('Cuota adicional agregada correctamente.');
+      closeAgregarCuota();
+    } catch (err) {
+      setModalError('No se pudo agregar la cuota. Revisa los datos e intenta nuevamente.');
+    } finally {
+      setModalLoading(false);
     }
   };
 
@@ -93,28 +180,65 @@ const AcuerdoDetallePage = () => {
           <h1>Detalle del acuerdo {detalle.numeroAcuerdo}</h1>
           <p className="page-subtitle">Revisa el plan de pago, cuotas y los pagos aplicados sobre este compromiso comercial.</p>
         </div>
-        <Link className="btn-secondary" to="/comercial">Volver a acuerdos</Link>
+        <div className="page-actions">
+          {detalle.estado === 'Borrador' && (
+            <button className="btn-primary" type="button" onClick={handleApprove} disabled={approving}>
+              {approving ? 'Aprobando...' : 'Aprobar acuerdo'}
+            </button>
+          )}
+          <Link className="btn-secondary" to="/comercial">Volver a acuerdos</Link>
+        </div>
       </div>
 
-      <SectionCard title="Resumen del acuerdo" description="Información principal del compromiso comercial.">
-        <div className="info-grid">
-          <div><strong>Cliente</strong><p>{clienteNombre || detalle.clienteExternoId}</p></div>
-          <div><strong>Obra</strong><p>{obraNombre || detalle.obraExternaId}</p></div>
-          <div><strong>Estado</strong><p>{detalle.estado}</p></div>
-          <div><strong>Vía</strong><p>{detalle.viaOperacion}</p></div>
-          <div><strong>Monto Total</strong><p>${detalle.montoTotal.toLocaleString()}</p></div>
-          <div><strong>Fecha Acuerdo</strong><p>{new Date(detalle.fechaAcuerdo).toLocaleDateString()}</p></div>
+      {approveError && <p className="form-error">{approveError}</p>}
+      {success && <p className="form-success">{success}</p>}
+
+      <section className="detail-hero">
+        <div>
+          <span className="eyebrow">Resumen del acuerdo</span>
+          <h2>{clienteNombre || detalle.clienteExternoId}</h2>
+          <p>{obraNombre || detalle.obraExternaId}</p>
         </div>
-      </SectionCard>
+        <div className="detail-hero-facts">
+          <div><span>Estado</span><strong>{detalle.estado}</strong></div>
+          <div><span>Vía</span><strong>{detalle.viaOperacion}</strong></div>
+          <div><span>Monto total</span><strong>${detalle.montoTotal.toLocaleString()}</strong></div>
+          <div><span>Fecha</span><strong>{new Date(detalle.fechaAcuerdo).toLocaleDateString()}</strong></div>
+        </div>
+      </section>
 
       <SectionCard title="Estado comercial" description="Suma pagada y deuda restante del acuerdo.">
         <EstadoComercialResumen estado={estadoComercial} />
       </SectionCard>
 
-      {!detalle.planPago ? (
+      {!planExists ? (
         <SectionCard title="Generar plan de pago" description="Crea el plan de cuotas para este acuerdo.">
           <PlanPagoForm onSubmit={handleCreatePlan} loading={planLoading} />
           {planError && <p className="form-error">{planError}</p>}
+          {success && <p className="form-success">{success}</p>}
+        </SectionCard>
+      ) : detalle.estado === 'Borrador' ? (
+        <SectionCard title="Plan de pago editable" description="Personaliza las cuotas antes de aprobar el acuerdo.">
+          <PlanPagoEditor
+            planPago={detalle.planPago}
+            onSave={async (payload) => {
+              setPlanLoading(true);
+              setPlanError('');
+              setSuccess('');
+              try {
+                await acuerdosService.actualizarPlanPago(Number(id), payload);
+                const updatedDetalle = await acuerdosService.getAcuerdoDetalle(id);
+                setDetalle(updatedDetalle);
+                setSuccess('Personalización guardada correctamente.');
+              } catch (err) {
+                setPlanError('No se pudo actualizar el plan. Revisa los valores y vuelve a intentar.');
+              } finally {
+                setPlanLoading(false);
+              }
+            }}
+            loading={planLoading}
+            error={planError}
+          />
           {success && <p className="form-success">{success}</p>}
         </SectionCard>
       ) : (
@@ -126,10 +250,33 @@ const AcuerdoDetallePage = () => {
             <div><strong>Periodicidad</strong><p>{detalle.planPago.periodicidad}</p></div>
             <div><strong>Primer vencimiento</strong><p>{new Date(detalle.planPago.fechaPrimerVencimiento).toLocaleDateString()}</p></div>
           </div>
-          <CuotasComercialesTable cuotas={detalle.planPago.cuotas} />
+          {(detalle.estado === 'Aprobado' || detalle.estado === 'EnCurso') && (
+            <div className="page-actions" style={{ marginBottom: '18px' }}>
+              <button className="btn-primary" type="button" onClick={openAgregarCuota}>
+                Agregar cuota
+              </button>
+            </div>
+          )}
+          <CuotasComercialesTable cuotas={detalle.planPago.cuotas} onAdjustCuota={openAjustarCuota} />
         </SectionCard>
       )}
 
+      <AjusteCuotaModal
+        open={ajustarModalOpen}
+        cuota={selectedCuota}
+        onClose={closeAjustarCuota}
+        onSave={handleAjustarCuota}
+        loading={modalLoading}
+        error={modalError}
+      />
+      <AgregarCuotaModal
+        open={agregarModalOpen}
+        planPago={detalle.planPago}
+        onClose={closeAgregarCuota}
+        onSave={handleAgregarCuota}
+        loading={modalLoading}
+        error={modalError}
+      />
       <SectionCard title="Pagos aplicados" description="Pagos comerciales registrados y su aplicación a cuotas.">
         {detalle.pagos && detalle.pagos.length > 0 ? (
           <div className="table-wrapper">

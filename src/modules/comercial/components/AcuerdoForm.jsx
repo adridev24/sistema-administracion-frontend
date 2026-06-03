@@ -41,7 +41,7 @@ const AcuerdoForm = ({ onSubmit, loading }) => {
   return (
     <form className="form-grid" onSubmit={handleSubmit}>
       <div className="form-field full-width">
-        <label>Cliente y obra desde SQL Server</label>
+        <label></label>
         <ClienteObraSelector
           clienteExternoId={form.clienteExternoId}
           obraExternoId={form.obraExternaId}

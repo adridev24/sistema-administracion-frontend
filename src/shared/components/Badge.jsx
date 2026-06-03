@@ -14,7 +14,11 @@ const badgeStyles = {
     parcial: { background: '#F3E5B4', color: '#7D6100' },
     pagada: { background: '#C6E7C9', color: '#236B1C' },
     vencida: { background: '#F8D7DA', color: '#842029' },
-    anulada: { background: '#D6D8DB', color: '#495057' }
+    anulada: { background: '#D6D8DB', color: '#495057' },
+    borrador: { background: '#E2E8F0', color: '#334155' },
+    aprobado: { background: '#DBEAFE', color: '#1D4ED8' },
+    encurso: { background: '#DCFCE7', color: '#166534' },
+    finalizado: { background: '#EDE9FE', color: '#5B21B6' }
   }
 };
 

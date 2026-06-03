@@ -56,26 +56,17 @@ const ClienteObraSelector = ({ clienteExternoId, obraExternoId, onChange }) => {
 
   const handleClientChange = (event) => {
     const clienteId = String(event.target.value);
-    onChange({ clienteExternoId: clienteId, obraExternaId: '' });
+    onChange({ clienteExternoId: clienteId, obraExternoId: '', obraExternaId: '' });
   };
 
   const handleObraChange = (event) => {
     const obraId = String(event.target.value);
-    onChange({ clienteExternoId: normalizedClienteId, obraExternaId: obraId });
+    onChange({ clienteExternoId: normalizedClienteId, obraExternoId: obraId, obraExternaId: obraId });
   };
 
   return (
     <div className="client-obra-selector">
       <div className="selector-grid">
-        <div className="form-field">
-          <label>Buscar cliente</label>
-          <input
-            type="text"
-            placeholder="Buscar por nombre, domicilio o teléfono"
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-          />
-        </div>
         <div className="form-field">
           <label>Cliente</label>
           <select value={clienteExternoId} onChange={handleClientChange} disabled={loadingClients || filteredClients.length === 0}>
