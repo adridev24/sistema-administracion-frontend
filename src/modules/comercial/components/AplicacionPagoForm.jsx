@@ -1,6 +1,9 @@
 import React, { useMemo } from 'react';
 
-const AplicacionPagoForm = ({ cuotas, onChange, pagoTotal }) => {
+const formatMoney = (value, monedaCodigo = 'ARS') =>
+  `${monedaCodigo} ${Number(value || 0).toLocaleString('es-AR', { maximumFractionDigits: 2 })}`;
+
+const AplicacionPagoForm = ({ cuotas, monedaCodigo = 'ARS', onChange, pagoTotal }) => {
   const defaultAplicaciones = useMemo(
     () => cuotas?.map((cuota) => ({ cuotaComercialId: cuota.id, importeAplicado: 0 })) || [],
     [cuotas]
@@ -33,7 +36,7 @@ const AplicacionPagoForm = ({ cuotas, onChange, pagoTotal }) => {
             <tr>
               <th>Cuota</th>
               <th>Saldo pendiente</th>
-              <th>Importe aplicación</th>
+              <th>Importe aplicacion</th>
             </tr>
           </thead>
           <tbody>
@@ -42,7 +45,7 @@ const AplicacionPagoForm = ({ cuotas, onChange, pagoTotal }) => {
               return (
                 <tr key={cuota.id}>
                   <td>{cuota.numeroCuota} - {cuota.tipoCuota}</td>
-                  <td>${cuota.saldoPendiente.toLocaleString()}</td>
+                  <td>{formatMoney(cuota.saldoPendiente, monedaCodigo)}</td>
                   <td>
                     <input
                       type="number"
@@ -59,7 +62,7 @@ const AplicacionPagoForm = ({ cuotas, onChange, pagoTotal }) => {
           </tbody>
         </table>
       </div>
-      <p className="hint-text">No se puede aplicar más que el saldo de cada cuota ni más que el total disponible del pago.</p>
+      <p className="hint-text">No se puede aplicar mas que el saldo de cada cuota ni mas que el total disponible del pago.</p>
     </div>
   );
 };

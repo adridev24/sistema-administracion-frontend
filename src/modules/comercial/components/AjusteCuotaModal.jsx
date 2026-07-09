@@ -13,7 +13,6 @@ const AjusteCuotaModal = ({ open, cuota, onClose, onSave, loading, error }) => {
   const [nuevoImporte, setNuevoImporte] = useState('');
   const [nuevaFecha, setNuevaFecha] = useState('');
   const [motivo, setMotivo] = useState('');
-  const [usuario, setUsuario] = useState('admin');
   const [historial, setHistorial] = useState([]);
   const [historialLoading, setHistorialLoading] = useState(false);
   const [localError, setLocalError] = useState('');
@@ -66,8 +65,7 @@ const AjusteCuotaModal = ({ open, cuota, onClose, onSave, loading, error }) => {
     onSave({
       nuevoImporteOriginal: importeValue,
       nuevaFechaVencimiento: new Date(nuevaFecha).toISOString(),
-      motivo: motivo.trim(),
-      usuario: usuario.trim() || 'admin'
+      motivo: motivo.trim()
     });
   };
 
@@ -125,15 +123,6 @@ const AjusteCuotaModal = ({ open, cuota, onClose, onSave, loading, error }) => {
               onChange={(e) => setMotivo(e.target.value)}
             />
           </div>
-          <div className="form-row">
-            <label>Usuario</label>
-            <input
-              type="text"
-              value={usuario}
-              onChange={(e) => setUsuario(e.target.value)}
-            />
-          </div>
-
           <div className="alert-box">
             <strong>Advertencia:</strong> Este ajuste solo afecta el saldo comercial. No genera factura ni asiento contable.
           </div>

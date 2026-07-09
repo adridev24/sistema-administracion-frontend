@@ -6,13 +6,21 @@ import externalDataService from '../services/externalDataService';
 import reportesComercialesService from '../services/reportesComercialesService';
 import '../comercial.css';
 
-const currency = new Intl.NumberFormat('es-AR', {
-  style: 'currency',
-  currency: 'ARS',
-  maximumFractionDigits: 0,
-});
+const formatMoney = (value, monedaCodigo = 'ARS') =>
+  `${monedaCodigo} ${Number(value || 0).toLocaleString('es-AR', { maximumFractionDigits: 2 })}`;
 
-const toDateInputValue = (date) => date.toISOString().slice(0, 10);
+const toDateInputValue = (date) => {
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, '0');
+  const day = String(date.getDate()).padStart(2, '0');
+  return `${year}-${month}-${day}`;
+};
+
+const formatDate = (value) => {
+  if (!value) return '-';
+  const [year, month, day] = String(value).slice(0, 10).split('-');
+  return year && month && day ? `${day}/${month}/${year}` : '-';
+};
 
 const getDefaultPeriod = () => {
   const now = new Date();
@@ -21,6 +29,7 @@ const getDefaultPeriod = () => {
   return {
     desde: toDateInputValue(from),
     hasta: toDateInputValue(to),
+    via: 'Todos',
   };
 };
 
@@ -28,6 +37,7 @@ const ReportesComercialesPage = () => {
   const [period, setPeriod] = useState(getDefaultPeriod);
   const [resumen, setResumen] = useState(null);
   const [clientNames, setClientNames] = useState({});
+  const [obraNames, setObraNames] = useState({});
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
 
@@ -67,7 +77,23 @@ const ReportesComercialesPage = () => {
         })
         .catch(() => {});
     });
-  }, [clientNames, resumen]);
+
+    const obraIds = (resumen.proximosVencimientos ?? [])
+      .map((cuota) => cuota.obraExternaId)
+      .filter((value, index, items) => value && items.indexOf(value) === index);
+
+    obraIds.forEach((obraId) => {
+      if (obraNames[obraId]) return;
+
+      externalDataService.getObraById(Number(obraId))
+        .then((obra) => {
+          if (obra?.nombreObra) {
+            setObraNames((prev) => ({ ...prev, [obraId]: obra.nombreObra }));
+          }
+        })
+        .catch(() => {});
+    });
+  }, [clientNames, obraNames, resumen]);
 
   const kpis = useMemo(() => {
     if (!resumen) return [];
@@ -115,6 +141,14 @@ const ReportesComercialesPage = () => {
             <label>Hasta</label>
             <input type="date" name="hasta" value={period.hasta} onChange={handlePeriodChange} />
           </div>
+          <div className="form-field">
+            <label>Via</label>
+            <select name="via" value={period.via} onChange={handlePeriodChange}>
+              <option value="Todos">Todos</option>
+              <option value="Via1">Via1</option>
+              <option value="Via2">Via2</option>
+            </select>
+          </div>
         </div>
       </SectionCard>
 
@@ -127,7 +161,7 @@ const ReportesComercialesPage = () => {
             {kpis.map((kpi) => (
               <div className="report-kpi" key={kpi.label}>
                 <span>{kpi.label}</span>
-                <strong>{currency.format(kpi.value ?? 0)}</strong>
+                <strong>{formatMoney(kpi.value ?? 0)}</strong>
                 <small>{kpi.hint}</small>
               </div>
             ))}
@@ -141,7 +175,7 @@ const ReportesComercialesPage = () => {
                     <tr>
                       <th>Cliente</th>
                       <th>Acuerdos</th>
-                      <th>Total acordado</th>
+                      <th>Total acuerdos</th>
                       <th>Total pagado</th>
                       <th>Saldo pendiente</th>
                     </tr>
@@ -151,9 +185,9 @@ const ReportesComercialesPage = () => {
                       <tr key={cliente.clienteExternoId}>
                         <td><strong>{clientNames[cliente.clienteExternoId] || cliente.clienteExternoId}</strong></td>
                         <td>{cliente.acuerdosActivos}</td>
-                        <td>{currency.format(cliente.totalAcordado)}</td>
-                        <td>{currency.format(cliente.totalPagado)}</td>
-                        <td>{currency.format(cliente.saldoPendiente)}</td>
+                        <td>{formatMoney(cliente.totalAcordado)}</td>
+                        <td>{formatMoney(cliente.totalPagado)}</td>
+                        <td>{formatMoney(cliente.saldoPendiente)}</td>
                       </tr>
                     ))}
                   </tbody>
@@ -184,12 +218,12 @@ const ReportesComercialesPage = () => {
                   <tbody>
                     {resumen.proximosVencimientos.map((cuota) => (
                       <tr key={cuota.cuotaId}>
-                        <td>{new Date(cuota.fechaVencimiento).toLocaleDateString()}</td>
+                        <td>{formatDate(cuota.fechaVencimiento)}</td>
                         <td>{cuota.numeroAcuerdo}</td>
                         <td>{clientNames[cuota.clienteExternoId] || cuota.clienteExternoId}</td>
-                        <td>{cuota.obraExternaId}</td>
+                        <td>{obraNames[cuota.obraExternaId] || cuota.obraExternaId}</td>
                         <td>{cuota.estado}</td>
-                        <td>{currency.format(cuota.saldoPendiente)}</td>
+                        <td>{formatMoney(cuota.saldoPendiente, cuota.monedaCodigo || 'ARS')}</td>
                       </tr>
                     ))}
                   </tbody>

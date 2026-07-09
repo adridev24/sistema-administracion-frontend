@@ -65,25 +65,30 @@ const AcuerdosPage = () => {
         acuerdos.map((acuerdo) => acuerdosService.getAcuerdoDetalle(acuerdo.id))
       );
 
-      const rows = acuerdos.map((acuerdo, index) => {
+      const rows = acuerdos.flatMap((acuerdo, index) => {
         const detalle = detalles[index];
-        const totalPagado = detalle?.pagos?.flatMap((pago) => pago.aplicaciones ?? [])
-          .reduce((sum, aplicacion) => sum + (aplicacion.importeAplicado ?? 0), 0) ?? 0;
-        const ultimoPagoFecha = detalle?.pagos?.length
-          ? new Date(Math.max(...detalle.pagos.map((pago) => new Date(pago.fechaPago).getTime())))
-          : null;
+        const vias = detalle?.vias?.length ? detalle.vias : acuerdo.vias ?? [];
 
-        return [
-          acuerdo.clienteNombre || acuerdo.clienteExternoId || '',
-          acuerdo.obraNombre || acuerdo.obraExternaId || '',
-          detalle?.montoTotal?.toFixed(2) ?? (acuerdo.montoTotal?.toFixed(2) ?? '0.00'),
-          totalPagado.toFixed(2),
-          ultimoPagoFecha ? ultimoPagoFecha.toLocaleDateString() : '',
-        ];
+        return vias.map((via) => {
+          const ultimoPagoFecha = via.pagos?.length
+            ? new Date(Math.max(...via.pagos.map((pago) => new Date(pago.fechaPago).getTime())))
+            : null;
+
+          return [
+            acuerdo.clienteNombre || acuerdo.clienteExternoId || '',
+            acuerdo.obraNombre || acuerdo.obraExternaId || '',
+            via.viaOperacion || '',
+            via.monedaCodigo || '',
+            (via.montoActual ?? 0).toFixed(2),
+            (via.totalPagado ?? 0).toFixed(2),
+            (via.saldoPendiente ?? 0).toFixed(2),
+            ultimoPagoFecha ? ultimoPagoFecha.toLocaleDateString() : '',
+          ];
+        });
       });
 
       const csvLines = [
-        ['Cliente', 'Obra', 'Importe Acuerdo', 'Total Pagado', 'Fecha ultimo pago'],
+        ['Cliente', 'Obra', 'Via', 'Moneda', 'Monto via', 'Total pagado', 'Saldo pendiente', 'Fecha ultimo pago'],
         ...rows,
       ].map((items) => items.map((value) => `"${String(value).replace(/"/g, '""')}"`).join(','));
 
@@ -105,7 +110,7 @@ const AcuerdosPage = () => {
   };
 
   const totalAcuerdos = acuerdos?.length ?? 0;
-  const montoTotal = acuerdos?.reduce((sum, acuerdo) => sum + (acuerdo.montoTotal ?? 0), 0) ?? 0;
+  const totalVias = acuerdos?.reduce((sum, acuerdo) => sum + (acuerdo.vias?.length ?? 0), 0) ?? 0;
   const estados = acuerdos?.reduce((acc, acuerdo) => {
     acc[acuerdo.estado] = (acc[acuerdo.estado] ?? 0) + 1;
     return acc;
@@ -121,7 +126,6 @@ const AcuerdosPage = () => {
         <div className="page-actions">
           <Link className="btn-secondary" to="/">Principal</Link>
           <Link className="btn-secondary" to="/comercial/reportes">Reportes</Link>
-          <Link className="btn-secondary" to="/comercial/pagos">Registrar pago</Link>
           <Link className="btn-primary" to="/comercial/nuevo">Nuevo acuerdo</Link>
         </div>
       </div>
@@ -153,8 +157,8 @@ const AcuerdosPage = () => {
           <strong>{totalAcuerdos}</strong>
         </div>
         <div className="metric-item">
-          <span>Monto comprometido</span>
-          <strong>${montoTotal.toLocaleString()}</strong>
+          <span>Vias comerciales</span>
+          <strong>{totalVias}</strong>
         </div>
         <div className="metric-item">
           <span>Borradores</span>

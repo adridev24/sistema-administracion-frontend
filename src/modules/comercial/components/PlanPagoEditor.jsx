@@ -8,8 +8,14 @@ const parseDateValue = (value) => {
   return date.toISOString().slice(0, 10);
 };
 
-const PlanPagoEditor = ({ planPago, onSave, loading, error }) => {
+const isAnticipo = (cuota) => cuota.tipoCuota === 'Anticipo';
+
+const money = (value, moneda = '') =>
+  `${moneda ? `${moneda} ` : ''}${Number(value || 0).toLocaleString('es-AR', { maximumFractionDigits: 2 })}`;
+
+const PlanPagoEditor = ({ planPago, viaMonto = 0, monedaCodigo = '', onSave, loading, error, readOnly = false }) => {
   const [plan, setPlan] = useState({ ...planPago });
+  const [localError, setLocalError] = useState('');
 
   useEffect(() => {
     setPlan({
@@ -20,15 +26,40 @@ const PlanPagoEditor = ({ planPago, onSave, loading, error }) => {
         fechaVencimiento: parseDateValue(cuota.fechaVencimiento),
       })),
     });
+    setLocalError('');
   }, [planPago]);
 
-  const totalPlan = useMemo(() => {
-    const cuotasTotal = plan.cuotas.reduce((sum, cuota) => sum + Number(cuota.importeOriginal || 0), 0);
-    return Number(plan.montoAnticipo || 0) + cuotasTotal;
-  }, [plan]);
+  const totalCuotas = useMemo(() => (
+    plan.cuotas
+      .filter((cuota) => !isAnticipo(cuota) && cuota.estado !== 'Anulada')
+      .reduce((sum, cuota) => sum + Number(cuota.importeOriginal || 0), 0)
+  ), [plan]);
+
+  const totalPlan = useMemo(() => (
+    Number(plan.tieneAnticipo ? plan.montoAnticipo || 0 : 0) + totalCuotas
+  ), [plan.tieneAnticipo, plan.montoAnticipo, totalCuotas]);
+
+  const difference = Number(viaMonto || 0) - totalPlan;
+  const totalsMatch = Math.abs(difference) <= 0.01;
 
   const handlePlanField = (field, value) => {
     setPlan((prev) => ({ ...prev, [field]: value }));
+  };
+
+  const handleAnticipoAmount = (value) => {
+    setPlan((prev) => ({
+      ...prev,
+      montoAnticipo: value,
+      cuotas: prev.cuotas.map((cuota) => (
+        isAnticipo(cuota)
+          ? {
+              ...cuota,
+              importeOriginal: value,
+              saldoPendiente: Math.max(Number(value || 0) - Number(cuota.importePagado || 0), 0)
+            }
+          : cuota
+      ))
+    }));
   };
 
   const handleCuotaField = (id, field, value) => {
@@ -41,9 +72,19 @@ const PlanPagoEditor = ({ planPago, onSave, loading, error }) => {
   };
 
   const handleSave = () => {
+    if (!totalsMatch) {
+      setLocalError('El total del plan no coincide con el monto de la via.');
+      return;
+    }
+
+    if (readOnly) {
+      setLocalError('El plan base no se puede modificar con el acuerdo aprobado.');
+      return;
+    }
+
     const payload = {
       tieneAnticipo: Boolean(plan.tieneAnticipo),
-      montoAnticipo: Number(plan.montoAnticipo || 0),
+      montoAnticipo: Number(plan.tieneAnticipo ? plan.montoAnticipo || 0 : 0),
       cantidadCuotas: Number(plan.cantidadCuotas || 0),
       fechaPrimerVencimiento: new Date(plan.fechaPrimerVencimiento).toISOString(),
       periodicidad: plan.periodicidad,
@@ -55,6 +96,7 @@ const PlanPagoEditor = ({ planPago, onSave, loading, error }) => {
       }))
     };
 
+    setLocalError('');
     onSave(payload);
   };
 
@@ -79,12 +121,18 @@ const PlanPagoEditor = ({ planPago, onSave, loading, error }) => {
             type="date"
             value={plan.fechaPrimerVencimiento}
             onChange={(e) => handlePlanField('fechaPrimerVencimiento', e.target.value)}
+            disabled={readOnly}
           />
         </div>
-        <div>
-          <strong>Anticipo</strong>
-          <p>{plan.tieneAnticipo ? 'Sí' : 'No'}</p>
-        </div>
+        <label className="via-toggle">
+          <input
+            type="checkbox"
+            checked={Boolean(plan.tieneAnticipo)}
+            onChange={(e) => handlePlanField('tieneAnticipo', e.target.checked)}
+            disabled={readOnly}
+          />
+          Tiene anticipo
+        </label>
         <div>
           <strong>Monto anticipo</strong>
           <input
@@ -92,14 +140,27 @@ const PlanPagoEditor = ({ planPago, onSave, loading, error }) => {
             min="0"
             step="0.01"
             value={plan.montoAnticipo}
-            onChange={(e) => handlePlanField('montoAnticipo', e.target.value)}
+            onChange={(e) => handleAnticipoAmount(e.target.value)}
+            disabled={readOnly || !plan.tieneAnticipo}
           />
         </div>
         <div>
-          <strong>Total del acuerdo</strong>
-          <p>${totalPlan.toLocaleString()}</p>
+          <strong>Total cuotas</strong>
+          <p>{money(totalCuotas, monedaCodigo)}</p>
+        </div>
+        <div>
+          <strong>Total del plan</strong>
+          <p>{money(totalPlan, monedaCodigo)}</p>
+        </div>
+        <div>
+          <strong>Monto de la via</strong>
+          <p>{money(viaMonto, monedaCodigo)}</p>
         </div>
       </div>
+
+      {!totalsMatch && (
+        <p className="form-error">El total del plan no coincide con el monto de la via. Diferencia: {money(difference, monedaCodigo)}</p>
+      )}
 
       <div className="table-wrapper editable-plan-table">
         <table className="data-table">
@@ -125,20 +186,27 @@ const PlanPagoEditor = ({ planPago, onSave, loading, error }) => {
                     className="table-input"
                     value={cuota.fechaVencimiento}
                     onChange={(e) => handleCuotaField(cuota.id, 'fechaVencimiento', e.target.value)}
+                    disabled={readOnly}
                   />
                 </td>
                 <td>
                   <input
                     type="number"
                     className="table-input"
-                    min="0.01"
+                    min="0"
                     step="0.01"
                     value={cuota.importeOriginal}
-                    onChange={(e) => handleCuotaField(cuota.id, 'importeOriginal', e.target.value)}
+                    onChange={(e) => {
+                      handleCuotaField(cuota.id, 'importeOriginal', e.target.value);
+                      if (isAnticipo(cuota)) {
+                        handlePlanField('montoAnticipo', e.target.value);
+                      }
+                    }}
+                    disabled={readOnly || isAnticipo(cuota)}
                   />
                 </td>
-                <td>${Number(cuota.importePagado || 0).toLocaleString()}</td>
-                <td>${Number(cuota.saldoPendiente || 0).toLocaleString()}</td>
+                <td>{money(cuota.importePagado, monedaCodigo)}</td>
+                <td>{money(cuota.saldoPendiente, monedaCodigo)}</td>
                 <td>{cuota.estado}</td>
               </tr>
             ))}
@@ -146,13 +214,17 @@ const PlanPagoEditor = ({ planPago, onSave, loading, error }) => {
         </table>
       </div>
 
-      {error && <p className="form-error">{error}</p>}
+      {(error || localError) && <p className="form-error">{localError || error}</p>}
 
-      <div className="form-footer">
-        <button className="btn-primary" type="button" onClick={handleSave} disabled={loading}>
-          {loading ? 'Guardando cambios...' : 'Guardar personalización'}
-        </button>
-      </div>
+      {readOnly ? (
+        <p className="empty-state">El plan base queda fijo al aprobar el acuerdo. Los cambios posteriores se cargan como cuotas adicionales o de ajuste.</p>
+      ) : (
+        <div className="form-footer">
+          <button className="btn-primary" type="button" onClick={handleSave} disabled={loading || !totalsMatch}>
+            {loading ? 'Guardando cambios...' : 'Guardar personalizacion'}
+          </button>
+        </div>
+      )}
     </div>
   );
 };

@@ -37,8 +37,16 @@ const PagosComercialesPage = () => {
   const handleSubmitPago = async (payload) => {
     setError('');
     try {
-      await registerPago(payload);
-      setAcuerdo((prev) => ({ ...prev, pagos: [...(prev?.pagos || []), payload] }));
+      const pago = await registerPago(payload);
+      setAcuerdo((prev) => ({
+        ...prev,
+        pagos: [...(prev?.pagos || []), pago],
+        vias: (prev?.vias || []).map((via) =>
+          via.id === payload.acuerdoComercialViaId
+            ? { ...via, pagos: [...(via.pagos || []), pago] }
+            : via
+        )
+      }));
     } catch (_) {}
   };
 
@@ -70,7 +78,6 @@ const PagosComercialesPage = () => {
         <SectionCard title="Formulario de pago" description="Registra el pago comercial y aplica el importe a las cuotas.">
           <PagoComercialForm
             acuerdo={acuerdo}
-            cuotas={acuerdo.planPago?.cuotas || []}
             onSubmit={handleSubmitPago}
             loading={loading}
             error={error || success ? '' : ''}

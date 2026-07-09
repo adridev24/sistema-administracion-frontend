@@ -1,10 +1,11 @@
 import { useNavigate } from 'react-router-dom';
 import logoAlbace from '../assets/logo_albace_completo.png';
+import { getCurrentUser } from '../Services/authUtils';
 
 const modules = [
   {
     title: 'Comercial',
-    description: 'Acuerdos, planes de pago, cuotas y pagos comerciales.',
+    description: 'Acuerdos, planes de pago y condiciones comerciales.',
     status: 'Disponible',
     route: '/comercial',
     metric: '',
@@ -34,13 +35,20 @@ const modules = [
 
 const Dashboard = () => {
   const navigate = useNavigate();
+  const currentUser = getCurrentUser();
+
+  const handleLogout = () => {
+    localStorage.removeItem('token');
+    navigate('/login');
+  };
 
   return (
     <div className="dashboard-page">
       <header className="dashboard-topbar">
         <img src={logoAlbace} alt="Metalúrgica Albace" className="dashboard-logo" />
         <div className="dashboard-actions">
-          <button onClick={() => window.location.reload()} className="dashboard-button-secondary">Cerrar sesión</button>
+          {currentUser?.username && <span className="session-user">{currentUser.fullName || currentUser.username}</span>}
+          <button onClick={handleLogout} className="dashboard-button-secondary">Cerrar sesion</button>
         </div>
       </header>
 
@@ -82,3 +90,4 @@ const Dashboard = () => {
 };
 
 export default Dashboard;
+

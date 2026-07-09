@@ -35,6 +35,22 @@ export function getUserRoles() {
   return [];
 }
 
+export function getCurrentUser() {
+  const token = localStorage.getItem('token');
+  const payload = parseJwt(token);
+  if (!payload) return null;
+
+  return {
+    username:
+      payload['http://schemas.xmlsoap.org/ws/2005/05/identity/claims/name'] ||
+      payload.unique_name ||
+      payload.preferred_username ||
+      payload.name ||
+      null,
+    fullName: payload.fullName || null
+  };
+}
+
 export function hasAnyRole(allowedRoles = []) {
   if (!allowedRoles || allowedRoles.length === 0) return true;
   const userRoles = getUserRoles();
